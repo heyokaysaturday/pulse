@@ -1,0 +1,36 @@
+node_modules/
+.expo/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# macOS
+.DS_Store
+
+# Temporary files created by Metro to check the health of the file watcher
+.metro-health-check*
+
+# TypeScript
+*.tsbuildinfo
+
+# Claude
+.claude/
+
+#sdk cache
+.sdk/
+
+#.history
+.history/
+
+# Environment variables
+.env
+.env.local
+
+# Bug reports
+bugreport-*.zip

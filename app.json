@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Pulse",
+    "slug": "pulse",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "automatic",
+    "scheme": "pulse",
+    "splash": {
+      "backgroundColor": "#F5F5F5",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pulse.app"
+    },
+    "android": {
+      "package": "com.pulse.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#8AB4D5"
+      }
+    }
+  }
+}
