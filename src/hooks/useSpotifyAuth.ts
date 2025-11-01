@@ -30,15 +30,36 @@ export function useSpotifyAuth() {
   // Log the redirect URI for debugging
   console.log('Spotify Redirect URI:', redirectUri);
 
-  // Load saved token on mount
+  // Load saved token on mount and check if it needs refresh
   useEffect(() => {
     const loadToken = async () => {
       try {
         const savedToken = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+        const expiryTimeStr = await AsyncStorage.getItem(TOKEN_EXPIRY_KEY);
+
         if (savedToken) {
-          setAccessToken(savedToken);
-          setIsConnected(true);
-          spotifyApi.setAccessToken(savedToken);
+          // Check if token is expired or about to expire (within 5 minutes)
+          const now = Date.now();
+          const expiryTime = expiryTimeStr ? parseInt(expiryTimeStr) : 0;
+          const timeUntilExpiry = expiryTime - now;
+
+          if (timeUntilExpiry < 5 * 60 * 1000) {
+            // Token expired or expiring soon, try to refresh
+            console.log('Token expired or expiring soon, attempting refresh...');
+            const refreshed = await refreshAccessToken();
+
+            if (!refreshed) {
+              // Refresh failed, clear tokens and require re-authentication
+              console.log('Token refresh failed - user needs to reconnect');
+              await disconnect();
+            }
+          } else {
+            // Token still valid
+            console.log('Token still valid for', Math.floor(timeUntilExpiry / 1000 / 60), 'minutes');
+            setAccessToken(savedToken);
+            setIsConnected(true);
+            spotifyApi.setAccessToken(savedToken);
+          }
         }
       } catch (error) {
         console.error('Error loading saved token:', error);
@@ -93,17 +114,21 @@ export function useSpotifyAuth() {
       }
 
       const tokenData = await tokenResponse.json();
-      const { access_token } = tokenData;
+      const { access_token, refresh_token, expires_in } = tokenData;
 
-      // Save token to AsyncStorage
+      // Calculate expiry time (current time + expires_in seconds)
+      const expiryTime = Date.now() + expires_in * 1000;
+
+      // Save token, refresh token, and expiry to AsyncStorage
       await AsyncStorage.setItem(TOKEN_STORAGE_KEY, access_token);
+      await AsyncStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refresh_token);
+      await AsyncStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
 
       setAccessToken(access_token);
       setIsConnected(true);
       spotifyApi.setAccessToken(access_token);
 
-      // TODO: Store refresh token for token renewal
-      // tokenData.refresh_token
+      console.log('Stored access token with refresh token, expires in:', expires_in, 'seconds')
     } catch (error) {
       console.error('Error exchanging code for token:', error);
     }
@@ -117,9 +142,59 @@ export function useSpotifyAuth() {
     }
   };
 
+  const refreshAccessToken = async (): Promise<boolean> => {
+    try {
+      const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+      if (!refreshToken) {
+        console.log('No refresh token available');
+        return false;
+      }
+
+      console.log('Refreshing access token...');
+
+      const tokenResponse = await fetch(SPOTIFY_CONFIG.TOKEN_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken,
+          client_id: SPOTIFY_CONFIG.CLIENT_ID,
+        }).toString(),
+      });
+
+      if (!tokenResponse.ok) {
+        console.error('Failed to refresh token:', tokenResponse.status);
+        return false;
+      }
+
+      const tokenData = await tokenResponse.json();
+      const { access_token, expires_in } = tokenData;
+
+      // Calculate new expiry time
+      const expiryTime = Date.now() + expires_in * 1000;
+
+      // Save new access token and expiry
+      await AsyncStorage.setItem(TOKEN_STORAGE_KEY, access_token);
+      await AsyncStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
+
+      setAccessToken(access_token);
+      spotifyApi.setAccessToken(access_token);
+
+      console.log('Access token refreshed successfully, expires in:', expires_in, 'seconds');
+      return true;
+    } catch (error) {
+      console.error('Error refreshing access token:', error);
+      return false;
+    }
+  };
+
   const disconnect = async () => {
-    // Clear saved token
+    // Clear all saved tokens
     await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+    await AsyncStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    await AsyncStorage.removeItem(TOKEN_EXPIRY_KEY);
 
     setAccessToken(null);
     setIsConnected(false);
@@ -129,6 +204,7 @@ export function useSpotifyAuth() {
   return {
     connect,
     disconnect,
+    refreshAccessToken,
     isConnected,
     accessToken,
   };
