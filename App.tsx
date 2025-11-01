@@ -13,6 +13,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from "react-native";
 import Svg, { Circle, G, Path } from "react-native-svg";
 import { useFonts, Caveat_400Regular, Caveat_700Bold } from '@expo-google-fonts/caveat';
@@ -446,6 +447,28 @@ export default function App() {
                 <Text style={styles.spotifyConnectText}>Connect Spotify</Text>
               </TouchableOpacity>
             )}
+
+            {/* Support Development Section */}
+            <Text style={[styles.sectionTitle, { color: modeTextColor, marginTop: 24 }]}>Support Development</Text>
+            <View style={styles.supportSection}>
+              <Text style={[styles.supportDescription, { color: modeTextColor }]}>
+                Pulse is completely free with no ads. If you find it helpful, consider supporting development!
+              </Text>
+              <View style={styles.supportButtons}>
+                <TouchableOpacity
+                  style={[styles.supportButton, { backgroundColor: '#FFDD00', borderColor: '#FFDD00' }]}
+                  onPress={() => Linking.openURL('https://buymeacoffee.com/YOURHANDLE')}
+                >
+                  <Text style={styles.supportButtonText}>☕ Buy Me a Coffee</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.supportButton, styles.githubButton, { borderColor: secondaryButtonBorder }]}
+                  onPress={() => Linking.openURL('https://github.com/heyokaysaturday/pulse')}
+                >
+                  <Text style={[styles.supportButtonTextSecondary, { color: textColor }]}>⭐ Star on GitHub</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
       )}
@@ -891,5 +914,35 @@ const styles = StyleSheet.create({
   spotifyHint: {
     fontSize: 12,
     fontStyle: "italic",
+  },
+  supportSection: {
+    marginTop: 12,
+  },
+  supportDescription: {
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  supportButtons: {
+    gap: 12,
+  },
+  supportButton: {
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+  },
+  githubButton: {
+    backgroundColor: "transparent",
+  },
+  supportButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#000000",
+  },
+  supportButtonTextSecondary: {
+    fontSize: 15,
+    fontWeight: "600",
   },
 });
