@@ -48,23 +48,42 @@ class SpotifyApiService {
       // Try to get detailed error message
       let errorMessage = `Spotify API error: ${response.status} ${response.statusText}`;
       try {
-        const errorData = await response.json();
-        console.log('Spotify API Error Details:', errorData);
-        if (errorData.error?.message) {
-          errorMessage = `Spotify API error: ${response.status} - ${errorData.error.message}`;
+        // Check if response has JSON content before trying to parse
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          console.log('Spotify API Error Details:', errorData);
+          if (errorData.error?.message) {
+            errorMessage = `Spotify API error: ${response.status} - ${errorData.error.message}`;
+          }
+        } else {
+          // Try to read as text for non-JSON errors
+          const errorText = await response.text();
+          if (errorText) {
+            console.log('Spotify API Error (non-JSON):', errorText);
+            errorMessage = `Spotify API error: ${response.status} - ${errorText.substring(0, 100)}`;
+          }
         }
       } catch (e) {
-        // If we can't parse error JSON, just use status
+        // If we can't parse error, just use status
+        console.log('Could not parse error response:', e);
       }
       throw new Error(errorMessage);
     }
 
-    // Some endpoints return 204 No Content
+    // Some endpoints return 204 No Content or empty body
     if (response.status === 204) {
       return null;
     }
 
-    return response.json();
+    // Check if response has content
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text();
+      return text ? JSON.parse(text) : null;
+    }
+
+    return null;
   }
 
   // Get user's available devices
@@ -201,7 +220,11 @@ class SpotifyApiService {
     } catch (error) {
       console.error('Error during fade out:', error);
       // Fallback to immediate pause if fade fails
-      await this.pause();
+      try {
+        await this.pause();
+      } catch (pauseError) {
+        console.error('Could not pause playback:', pauseError);
+      }
     }
   }
 
