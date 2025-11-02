@@ -105,6 +105,8 @@ const styles = StyleSheet.create({
   },
   timerContainerLandscape: {
     flex: 0.6,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
   circleContainer: {
     justifyContent: 'center',

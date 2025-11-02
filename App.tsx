@@ -175,50 +175,50 @@ export default function App() {
         setMode('focus');
         setTimeLeft(FOCUS_TIME);
       }
-      setIsActive(false);
+      // Keep timer running when switching modes
+      setIsActive(true);
       progressAnim.setValue(0);
       fadeTriggeredRef.current = false;
     }
   }, [isActive, timeLeft, mode, FOCUS_TIME, BREAK_TIME, progressAnim, scaleAnim]);
 
-  // Spotify control: Fade in when focus starts, fade out when focus ends/pauses
-  const previousIsActiveRef = useRef(isActive);
+  // Spotify control: Handle mode transitions
+  const previousModeRef = useRef(mode);
 
   useEffect(() => {
-    // Only run when isActive changes AND Spotify is connected
-    if (!isSpotifyConnected) return;
+    if (!isSpotifyConnected || !isActive) return;
 
-    const justStarted = isActive && !previousIsActiveRef.current;
-    const justStopped = !isActive && previousIsActiveRef.current;
+    const prevMode = previousModeRef.current;
+    const currentMode = mode;
 
-    const handleSpotifyControl = async () => {
-      // Skip if we've already determined device doesn't support control
+    // Just entered focus mode from break
+    const justEnteredFocus = currentMode === 'focus' && prevMode === 'break';
+    // Just left focus mode to break
+    const justLeftFocus = currentMode === 'break' && prevMode === 'focus';
+
+    const handleModeTransition = async () => {
       if (!deviceSupportsControlRef.current) {
         console.log('⏭️ Skipping playback control - device does not support control');
         return;
       }
 
-      if (justStarted && mode === 'focus') {
+      if (justEnteredFocus) {
         // Starting focus mode - fade in music
-        if (!fadeTriggeredRef.current) {
-          try {
-            await spotifyApi.playAndFadeIn(1000);
-            fadeTriggeredRef.current = true;
-          } catch (error: any) {
-            // If we get a restriction violation, remember this device can't be controlled
-            if (error?.message?.includes('Restriction violated')) {
-              console.log('🚫 Device cannot be controlled - disabling playback control for this session');
-              deviceSupportsControlRef.current = false;
-            }
+        console.log('🎵 Entering focus mode - fading in music');
+        try {
+          await spotifyApi.playAndFadeIn(1000);
+        } catch (error: any) {
+          if (error?.message?.includes('Restriction violated')) {
+            console.log('🚫 Device cannot be controlled - disabling playback control for this session');
+            deviceSupportsControlRef.current = false;
           }
         }
-      } else if (justStopped && mode === 'focus' && fadeTriggeredRef.current) {
-        // Pausing or ending focus mode - fade out music
+      } else if (justLeftFocus) {
+        // Leaving focus mode - fade out music
+        console.log('🎵 Leaving focus mode - fading out music');
         try {
           await spotifyApi.fadeOutAndPause(2000);
-          fadeTriggeredRef.current = false;
         } catch (error: any) {
-          // If we get a restriction violation, remember this device can't be controlled
           if (error?.message?.includes('Restriction violated')) {
             console.log('🚫 Device cannot be controlled - disabling playback control for this session');
             deviceSupportsControlRef.current = false;
@@ -227,16 +227,34 @@ export default function App() {
       }
     };
 
-    // Only call handleSpotifyControl if isActive actually changed
-    if (justStarted || justStopped) {
-      handleSpotifyControl();
+    if (justEnteredFocus || justLeftFocus) {
+      handleModeTransition();
     }
 
-    previousIsActiveRef.current = isActive;
-  }, [isActive, isSpotifyConnected, mode]);
+    // Update previous mode reference
+    previousModeRef.current = mode;
+  }, [mode, isActive, isSpotifyConnected]);
 
-  const handleStartPause = () => {
-    setIsActive(!isActive);
+  const handleStartPause = async () => {
+    const newIsActive = !isActive;
+    setIsActive(newIsActive);
+
+    // Control Spotify playback based on timer state and mode
+    if (isSpotifyConnected && mode === 'focus') {
+      try {
+        if (newIsActive) {
+          // Starting timer in focus mode - start/resume music
+          console.log('▶️ Starting timer - resuming music');
+          await spotifyApi.playAndFadeIn(500); // Quick 500ms fade
+        } else {
+          // Pausing timer in focus mode - pause music
+          console.log('⏸️ Pausing timer - pausing music');
+          await spotifyApi.pause();
+        }
+      } catch (error) {
+        console.log('Could not control Spotify playback:', error);
+      }
+    }
   };
 
   const handleReset = () => {
@@ -330,14 +348,12 @@ export default function App() {
       <TouchableWithoutFeedback
         onPress={() => {
           Keyboard.dismiss();
-          if (showTasks) setShowTasks(false);
         }}
       >
         <View
           style={[
             styles.container,
             { backgroundColor },
-            isLandscape && styles.containerLandscape,
           ]}
         >
           <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
@@ -356,29 +372,32 @@ export default function App() {
             onToggleTasks={() => setShowTasks(!showTasks)}
           />
 
-          <Timer
-            timeLeft={timeLeft}
-            mode={mode}
-            textColor={textColor}
-            modeColor={modeColor}
-            ringBackgroundColor={ringBackgroundColor}
-            progressAnim={progressAnim}
-            currentTrack={currentTrack}
-            isPlaying={isPlaying}
-            isSpotifyConnected={isSpotifyConnected}
-            isLandscape={isLandscape}
-          />
+          <View style={[styles.mainContent, isLandscape && styles.landscapeContent]}>
+            <Timer
+              timeLeft={timeLeft}
+              mode={mode}
+              textColor={textColor}
+              modeColor={modeColor}
+              ringBackgroundColor={ringBackgroundColor}
+              progressAnim={progressAnim}
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+              isSpotifyConnected={isSpotifyConnected}
+              isLandscape={isLandscape}
+            />
 
-          <Controls
-            isActive={isActive}
-            modeColor={modeColor}
-            secondaryButtonBg={secondaryButtonBg}
-            secondaryButtonBorder={secondaryButtonBorder}
-            secondaryButtonText={secondaryButtonText}
-            onStartPause={handleStartPause}
-            onReset={handleReset}
-            onSkip={handleSkip}
-          />
+            <Controls
+              isActive={isActive}
+              modeColor={modeColor}
+              secondaryButtonBg={secondaryButtonBg}
+              secondaryButtonBorder={secondaryButtonBorder}
+              secondaryButtonText={secondaryButtonText}
+              isLandscape={isLandscape}
+              onStartPause={handleStartPause}
+              onReset={handleReset}
+              onSkip={handleSkip}
+            />
+          </View>
 
           {showSettings && (
             <SettingsModal
@@ -421,6 +440,7 @@ export default function App() {
               onAddTask={addTask}
               onToggleTask={toggleTask}
               onDeleteTask={deleteTask}
+              onClose={() => setShowTasks(false)}
             />
           )}
         </View>
@@ -435,6 +455,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
   },
   containerLandscape: {
+    flexDirection: 'row',
+  },
+  mainContent: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  landscapeContent: {
+    flex: 1,
     flexDirection: 'row',
   },
 });

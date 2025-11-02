@@ -314,24 +314,44 @@ class SpotifyApiService {
 
       // Try to fade in volume
       try {
-        // Test if volume control works by trying to set to current volume first
-        // This way we don't accidentally mute if control is restricted
-        const currentVolume = state.device?.volume_percent || targetVolume;
-        await this.setVolume(currentVolume);
+        // If music is already playing, just fade the volume up
+        if (state.is_playing) {
+          console.log('Music already playing - fading volume up from current level');
+          const currentVolume = state.device?.volume_percent || 0;
 
-        // If that worked, now we can safely fade
-        await this.setVolume(0);
-        await this.play(deviceId);
+          const steps = 20;
+          const stepDuration = durationMs / steps;
+          const volumeDiff = targetVolume - currentVolume;
+          const volumeStep = volumeDiff / steps;
 
-        const steps = 20;
-        const stepDuration = durationMs / steps;
-        const volumeStep = targetVolume / steps;
+          // Gradually increase volume to user's preferred level
+          for (let i = 1; i <= steps; i++) {
+            const newVolume = Math.min(targetVolume, Math.round(currentVolume + (volumeStep * i)));
+            await this.setVolume(newVolume);
+            await new Promise(resolve => setTimeout(resolve, stepDuration));
+          }
+        } else {
+          // Music is paused - start playback and fade in from 0
+          console.log('Music paused - starting playback and fading in');
 
-        // Gradually increase volume to user's preferred level
-        for (let i = 1; i <= steps; i++) {
-          const newVolume = Math.min(targetVolume, Math.round(volumeStep * i));
-          await this.setVolume(newVolume);
-          await new Promise(resolve => setTimeout(resolve, stepDuration));
+          // Test if volume control works by trying to set to current volume first
+          const currentVolume = state.device?.volume_percent || targetVolume;
+          await this.setVolume(currentVolume);
+
+          // If that worked, now we can safely fade
+          await this.setVolume(0);
+          await this.play(deviceId);
+
+          const steps = 20;
+          const stepDuration = durationMs / steps;
+          const volumeStep = targetVolume / steps;
+
+          // Gradually increase volume to user's preferred level
+          for (let i = 1; i <= steps; i++) {
+            const newVolume = Math.min(targetVolume, Math.round(volumeStep * i));
+            await this.setVolume(newVolume);
+            await new Promise(resolve => setTimeout(resolve, stepDuration));
+          }
         }
       } catch (volumeError: any) {
         // If volume control fails, restore volume and throw error to caller
