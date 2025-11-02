@@ -1,5 +1,5 @@
 import React from "react";
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Text, StyleSheet, Platform } from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
 
 interface HeaderProps {
@@ -91,7 +91,7 @@ export const Header: React.FC<HeaderProps> = ({
 const styles = StyleSheet.create({
   header: {
     alignItems: "center",
-    paddingTop: 100,
+    paddingTop: Platform.OS === "web" ? 40 : 100,
     paddingBottom: 20,
     position: "relative",
   },
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
   settingsButton: {
     position: "absolute",
     left: 20,
-    top: 110,
+    top: Platform.OS === "web" ? 50 : 110,
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   toggleTasksButton: {
     position: "absolute",
     right: 20,
-    top: 112,
+    top: Platform.OS === "web" ? 52 : 112,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 16,

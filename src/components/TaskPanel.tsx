@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
@@ -52,12 +53,14 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
 }) => {
   const hasCompletedTasks = tasks.some(task => task.completed);
   return (
-    <View style={[styles.taskPanel, { backgroundColor: taskPanelBg }]}>
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-      <View style={styles.header}>
+    <TouchableWithoutFeedback onPress={onClose}>
+      <View style={[styles.taskPanel, { backgroundColor: taskPanelBg }]}>
+        <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+          <KeyboardAvoidingView
+            style={styles.keyboardAvoidingView}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <View style={styles.header}>
         <Text style={[styles.taskPanelTitle, { color: modeColor }]}>Tasks</Text>
         {hasCompletedTasks && (
           <TouchableOpacity
@@ -132,8 +135,10 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
-      </KeyboardAvoidingView>
-    </View>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -148,7 +153,7 @@ const styles = StyleSheet.create({
   keyboardAvoidingView: {
     flex: 1,
     padding: 20,
-    paddingTop: 80,
+    paddingTop: Platform.OS === 'web' ? 20 : 80,
   },
   header: {
     flexDirection: 'row',
