@@ -146,9 +146,16 @@ const styles = StyleSheet.create({
   taskPanel: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    right: 0,
+    ...(Platform.OS === 'web'
+      ? { right: 0, width: '50%', left: undefined }
+      : { left: 0, right: 0 }
+    ),
     bottom: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   keyboardAvoidingView: {
     flex: 1,
