@@ -178,7 +178,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               placeholderTextColor={modeTextColor}
               value={customFocus}
               onChangeText={onCustomFocusChange}
-              keyboardType="number-pad"
+              keyboardType="numeric"
+              inputMode="numeric"
             />
           </View>
 
@@ -199,7 +200,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               placeholderTextColor={modeTextColor}
               value={customBreak}
               onChangeText={onCustomBreakChange}
-              keyboardType="number-pad"
+              keyboardType="numeric"
+              inputMode="numeric"
             />
           </View>
         </View>

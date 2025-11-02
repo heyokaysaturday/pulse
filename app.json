@@ -6,7 +6,9 @@
     "orientation": "default",
     "userInterfaceStyle": "automatic",
     "scheme": "pulse",
+    "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/splash.png",
       "backgroundColor": "#F5F5F5",
       "resizeMode": "contain"
     },
@@ -16,8 +18,25 @@
     },
     "android": {
       "package": "com.pulse.app",
+      "versionCode": 1,
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#8AB4D5"
+      },
+      "permissions": [
+        "INTERNET",
+        "VIBRATE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
+    },
+    "plugins": [
+      "expo-av",
+      "expo-asset"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "fa28ad9b-f825-4cc9-a9fe-2c6aa378f37e"
       }
     }
   }
