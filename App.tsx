@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
+  Text,
   TouchableWithoutFeedback,
   StatusBar,
   Animated,
@@ -16,7 +17,7 @@ import { useFonts, Caveat_400Regular, Caveat_700Bold } from '@expo-google-fonts/
 import { useSpotifyAuth } from './src/hooks/useSpotifyAuth';
 import { spotifyApi } from './src/services/spotifyApi';
 import { soundService } from './src/services/soundService';
-import { Header, Timer, Controls, TaskPanel, SettingsModal } from './src/components';
+import { Header, Timer, Controls, TaskPanel, SettingsModal, ErrorBoundary } from './src/components';
 import { Task, Mode } from './src/types';
 import { getThemeColors } from './src/utils/theme';
 
@@ -340,27 +341,34 @@ export default function App() {
   };
 
   if (!fontsLoaded) {
-    return null;
+    return (
+      <View style={[styles.container, { backgroundColor }]}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ color: textColor, fontSize: 18 }}>Loading...</Text>
+        </View>
+      </View>
+    );
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-    >
-      <TouchableWithoutFeedback
-        onPress={() => {
-          Keyboard.dismiss();
-        }}
+    <ErrorBoundary>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
-        <View
-          style={[
-            styles.container,
-            { backgroundColor },
-          ]}
+        <TouchableWithoutFeedback
+          onPress={() => {
+            Keyboard.dismiss();
+          }}
         >
-          <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+          <View
+            style={[
+              styles.container,
+              { backgroundColor },
+            ]}
+          >
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
           <Header
             modeColor={modeColor}
@@ -453,6 +461,7 @@ export default function App() {
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
+    </ErrorBoundary>
   );
 }
 
