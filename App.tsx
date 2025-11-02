@@ -13,7 +13,6 @@ import {
   Platform,
   Keyboard,
 } from 'react-native';
-import { useFonts, Caveat_400Regular, Caveat_700Bold } from '@expo-google-fonts/caveat';
 import { useSpotifyAuth } from './src/hooks/useSpotifyAuth';
 import { spotifyApi } from './src/services/spotifyApi';
 import { soundService } from './src/services/soundService';
@@ -22,11 +21,6 @@ import { Task, Mode } from './src/types';
 import { getThemeColors } from './src/utils/theme';
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
-    Caveat_400Regular,
-    Caveat_700Bold,
-    LCD: require('./assets/fonts/LCD.ttf'),
-  });
 
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
@@ -339,16 +333,6 @@ export default function App() {
   const closeSettings = () => {
     setShowSettings(false);
   };
-
-  if (!fontsLoaded) {
-    return (
-      <View style={[styles.container, { backgroundColor }]}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ color: textColor, fontSize: 18 }}>Loading...</Text>
-        </View>
-      </View>
-    );
-  }
 
   return (
     <ErrorBoundary>
