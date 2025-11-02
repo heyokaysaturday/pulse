@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Linking,
+  ScrollView,
 } from 'react-native';
 
 interface SettingsModalProps {
@@ -69,9 +70,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </TouchableOpacity>
         </View>
 
-        <Text style={[styles.sectionTitle, { color: modeTextColor }]}>
-          Presets
-        </Text>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={true}
+          bounces={true}
+          contentContainerStyle={styles.scrollContentContainer}
+        >
+          <Text style={[styles.sectionTitle, { color: modeTextColor }]}>
+            Presets
+          </Text>
 
         <View style={styles.presetButtons}>
           <TouchableOpacity
@@ -282,6 +289,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </TouchableOpacity>
           </View>
         </View>
+        </ScrollView>
       </View>
     </View>
   );
@@ -315,6 +323,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
+  },
+  scrollView: {
+    maxHeight: '100%',
+  },
+  scrollContentContainer: {
+    paddingBottom: 10,
   },
   settingsTitle: {
     fontSize: 24,

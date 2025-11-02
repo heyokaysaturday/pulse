@@ -98,7 +98,7 @@ export default function App() {
     if (!isActive) {
       setTimeLeft(mode === 'focus' ? FOCUS_TIME : BREAK_TIME);
     }
-  }, [focusDuration, breakDuration, mode, isActive, FOCUS_TIME, BREAK_TIME]);
+  }, [focusDuration, breakDuration, mode, FOCUS_TIME, BREAK_TIME]);
 
   // Capture user's volume when they start the timer (without controlling playback)
   useEffect(() => {
@@ -309,6 +309,10 @@ export default function App() {
     setTasks(tasks.filter((task) => task.id !== id));
   };
 
+  const clearCompletedTasks = () => {
+    setTasks(tasks.filter((task) => !task.completed));
+  };
+
   const applyPreset = (focusMin: number, breakMin: number) => {
     setFocusDuration(focusMin);
     setBreakDuration(breakMin);
@@ -436,10 +440,13 @@ export default function App() {
               inputBg={inputBg}
               inputBorder={inputBorder}
               secondaryButtonText={secondaryButtonText}
+              secondaryButtonBg={secondaryButtonBg}
+              secondaryButtonBorder={secondaryButtonBorder}
               onTaskTextChange={setNewTaskText}
               onAddTask={addTask}
               onToggleTask={toggleTask}
               onDeleteTask={deleteTask}
+              onClearCompleted={clearCompletedTasks}
               onClose={() => setShowTasks(false)}
             />
           )}

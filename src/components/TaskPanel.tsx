@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Animated,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import { Task } from '../types';
-
-const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 interface TaskPanelProps {
   tasks: Task[];
@@ -25,10 +21,13 @@ interface TaskPanelProps {
   inputBg: string;
   inputBorder: string;
   secondaryButtonText: string;
+  secondaryButtonBg: string;
+  secondaryButtonBorder: string;
   onTaskTextChange: (text: string) => void;
   onAddTask: () => void;
   onToggleTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
+  onClearCompleted: () => void;
   onClose: () => void;
 }
 
@@ -42,24 +41,16 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
   inputBg,
   inputBorder,
   secondaryButtonText,
+  secondaryButtonBg,
+  secondaryButtonBorder,
   onTaskTextChange,
   onAddTask,
   onToggleTask,
   onDeleteTask,
+  onClearCompleted,
   onClose,
 }) => {
-  const generateWavyPath = (width: number, height: number) => {
-    const amplitude = 1.5;
-    const frequency = 0.08;
-    const yCenter = height / 2; // Center the wave vertically on the text
-    let path = `M 0 ${yCenter}`;
-    for (let x = 0; x <= width; x += 2) {
-      const y = yCenter + amplitude * Math.sin(frequency * x);
-      path += ` L ${x} ${y}`;
-    }
-    return path;
-  };
-
+  const hasCompletedTasks = tasks.some(task => task.completed);
   return (
     <View style={[styles.taskPanel, { backgroundColor: taskPanelBg }]}>
       <KeyboardAvoidingView
@@ -68,30 +59,24 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
       >
       <View style={styles.header}>
         <Text style={[styles.taskPanelTitle, { color: modeColor }]}>Tasks</Text>
+        {hasCompletedTasks && (
+          <TouchableOpacity
+            style={[styles.clearButton, {
+              backgroundColor: secondaryButtonBg,
+              borderColor: secondaryButtonBorder,
+            }]}
+            onPress={onClearCompleted}
+          >
+            <Text style={[styles.clearButtonText, { color: secondaryButtonText }]}>Clear</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
           <Text style={[styles.closeButtonText, { color: textColor }]}>✕</Text>
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.taskList} keyboardShouldPersistTaps="handled">
-        {tasks.map((task) => {
-          const TaskItem = () => {
-            const [textDimensions, setTextDimensions] = useState({ width: 0, height: 0 });
-            const animatedOpacity = useRef(new Animated.Value(0)).current;
-
-            useEffect(() => {
-              if (task.completed) {
-                Animated.timing(animatedOpacity, {
-                  toValue: 1,
-                  duration: 300,
-                  useNativeDriver: true,
-                }).start();
-              } else {
-                animatedOpacity.setValue(0);
-              }
-            }, [task.completed]);
-
-            return (
-              <View style={styles.taskItem} key={task.id}>
+        {tasks.map((task) => (
+          <View style={styles.taskItem} key={task.id}>
                 <TouchableOpacity
                   style={[styles.checkbox, { borderColor: modeColor }]}
                   onPress={() => onToggleTask(task.id)}
@@ -101,46 +86,15 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                   )}
                 </TouchableOpacity>
                 <View style={{ flex: 1 }}>
-                  <View style={{ position: 'relative', alignSelf: 'flex-start' }}>
-                    <Text
-                      onLayout={(e) => {
-                        if (task.completed) {
-                          setTextDimensions({
-                            width: e.nativeEvent.layout.width,
-                            height: e.nativeEvent.layout.height,
-                          });
-                        }
-                      }}
-                      style={[
-                        styles.taskText,
-                        { color: textColor },
-                        task.completed && styles.taskTextCompleted,
-                      ]}
-                    >
-                      {task.text}
-                    </Text>
-                    {textDimensions.width > 0 && task.completed && (
-                      <Svg
-                        height={textDimensions.height}
-                        width={textDimensions.width}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          pointerEvents: 'none',
-                        }}
-                        viewBox={`0 0 ${textDimensions.width} ${textDimensions.height}`}
-                      >
-                        <AnimatedPath
-                          d={generateWavyPath(textDimensions.width, textDimensions.height)}
-                          stroke={modeColor}
-                          strokeWidth="1.5"
-                          fill="none"
-                          opacity={animatedOpacity}
-                        />
-                      </Svg>
-                    )}
-                  </View>
+                  <Text
+                    style={[
+                      styles.taskText,
+                      { color: textColor },
+                      task.completed && [styles.taskTextCompleted, { color: modeColor }],
+                    ]}
+                  >
+                    {task.text}
+                  </Text>
                 </View>
                 <TouchableOpacity
                   style={styles.deleteButton}
@@ -151,11 +105,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
                   </Text>
                 </TouchableOpacity>
               </View>
-            );
-          };
-
-          return <TaskItem key={task.id} />;
-        })}
+        ))}
       </ScrollView>
 
       <View style={[styles.taskInputContainer, { borderColor: inputBorder }]}>
@@ -211,6 +161,18 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
   },
+  clearButton: {
+    position: 'absolute',
+    left: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  clearButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
   closeButton: {
     position: 'absolute',
     right: 0,
@@ -254,7 +216,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   taskTextCompleted: {
-    opacity: 0.5,
+    opacity: 0.7,
+    textDecorationLine: 'line-through',
+    textDecorationStyle: 'solid',
   },
   deleteButton: {
     padding: 5,
