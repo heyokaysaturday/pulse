@@ -30,6 +30,9 @@
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
     },
+    "web": {
+      "favicon": "./assets/web/icon-192.png"
+    },
     "plugins": [
       "expo-av",
       "expo-asset"

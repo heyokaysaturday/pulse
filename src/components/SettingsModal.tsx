@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   StyleSheet,
   Linking,
   ScrollView,
@@ -57,9 +58,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onDisconnectSpotify,
 }) => {
   return (
-    <View style={styles.modalOverlay}>
-      <View style={[styles.settingsModal, { backgroundColor: taskPanelBg }]}>
-        <View style={styles.settingsHeader}>
+    <TouchableWithoutFeedback onPress={onClose}>
+      <View style={styles.modalOverlay}>
+        <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+          <View style={[styles.settingsModal, { backgroundColor: taskPanelBg }]}>
+            <View style={styles.settingsHeader}>
           <Text style={[styles.settingsTitle, { color: textColor }]}>
             Timer Settings
           </Text>
@@ -75,6 +78,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           showsVerticalScrollIndicator={true}
           bounces={true}
           contentContainerStyle={styles.scrollContentContainer}
+          keyboardShouldPersistTaps="handled"
         >
           <Text style={[styles.sectionTitle, { color: modeTextColor }]}>
             Presets
@@ -180,6 +184,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onChangeText={onCustomFocusChange}
               keyboardType="numeric"
               inputMode="numeric"
+              editable={true}
+              selectTextOnFocus={true}
             />
           </View>
 
@@ -202,6 +208,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onChangeText={onCustomBreakChange}
               keyboardType="numeric"
               inputMode="numeric"
+              editable={true}
+              selectTextOnFocus={true}
             />
           </View>
         </View>
@@ -292,8 +300,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </View>
         </View>
         </ScrollView>
+          </View>
+        </TouchableWithoutFeedback>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 
