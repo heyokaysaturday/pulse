@@ -4,11 +4,13 @@ import {
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  Modal,
   StyleSheet,
   ScrollView,
 } from 'react-native';
 
 interface PrivacyModalProps {
+  visible: boolean;
   textColor: string;
   modeTextColor: string;
   taskPanelBg: string;
@@ -17,6 +19,7 @@ interface PrivacyModalProps {
 }
 
 export const PrivacyModal: React.FC<PrivacyModalProps> = ({
+  visible,
   textColor,
   modeTextColor,
   taskPanelBg,
@@ -24,11 +27,17 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({
   onClose,
 }) => {
   return (
-    <TouchableWithoutFeedback onPress={onClose}>
-      <View style={styles.modalOverlay}>
-        <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-          <View style={[styles.privacyModal, { backgroundColor: taskPanelBg }]}>
-            <View style={styles.privacyHeader}>
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={[styles.privacyModal, { backgroundColor: taskPanelBg }]}>
+              <View style={styles.privacyHeader}>
               <Text style={[styles.privacyTitle, { color: textColor }]}>
                 Privacy Policy
               </Text>
@@ -134,10 +143,11 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({
                 Questions about this privacy policy? Contact support@pulsetimer.dev
               </Text>
             </ScrollView>
-          </View>
-        </TouchableWithoutFeedback>
-      </View>
-    </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
   );
 };
 

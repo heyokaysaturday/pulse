@@ -449,31 +449,30 @@ export default function App() {
             />
           </View>
 
-          {showSettings && (
-            <SettingsModal
-              focusDuration={focusDuration}
-              breakDuration={breakDuration}
-              customFocus={customFocus}
-              customBreak={customBreak}
-              isSpotifyConnected={isSpotifyConnected}
-              textColor={textColor}
-              modeColor={modeColor}
-              modeTextColor={modeTextColor}
-              taskPanelBg={taskPanelBg}
-              inputBg={inputBg}
-              inputBorder={inputBorder}
-              secondaryButtonBg={secondaryButtonBg}
-              secondaryButtonBorder={secondaryButtonBorder}
-              secondaryButtonText={secondaryButtonText}
-              onClose={closeSettings}
-              onApplyPreset={applyPreset}
-              onCustomFocusChange={setCustomFocus}
-              onCustomBreakChange={setCustomBreak}
-              onApplyCustom={applyCustomTimer}
-              onConnectSpotify={connectSpotify}
-              onDisconnectSpotify={disconnectSpotify}
-            />
-          )}
+          <SettingsModal
+            visible={showSettings}
+            focusDuration={focusDuration}
+            breakDuration={breakDuration}
+            customFocus={customFocus}
+            customBreak={customBreak}
+            isSpotifyConnected={isSpotifyConnected}
+            textColor={textColor}
+            modeColor={modeColor}
+            modeTextColor={modeTextColor}
+            taskPanelBg={taskPanelBg}
+            inputBg={inputBg}
+            inputBorder={inputBorder}
+            secondaryButtonBg={secondaryButtonBg}
+            secondaryButtonBorder={secondaryButtonBorder}
+            secondaryButtonText={secondaryButtonText}
+            onClose={closeSettings}
+            onApplyPreset={applyPreset}
+            onCustomFocusChange={setCustomFocus}
+            onCustomBreakChange={setCustomBreak}
+            onApplyCustom={applyCustomTimer}
+            onConnectSpotify={connectSpotify}
+            onDisconnectSpotify={disconnectSpotify}
+          />
 
           {showTasks && (
             <TaskPanel
@@ -497,30 +496,28 @@ export default function App() {
             />
           )}
 
-          {showHelp && (
-            <HelpModal
-              textColor={textColor}
-              modeColor={modeColor}
-              modeTextColor={modeTextColor}
-              taskPanelBg={taskPanelBg}
-              secondaryButtonText={secondaryButtonText}
-              onClose={() => setShowHelp(false)}
-              onPrivacyPress={() => {
-                setShowHelp(false);
-                setShowPrivacy(true);
-              }}
-            />
-          )}
+          <HelpModal
+            visible={showHelp}
+            textColor={textColor}
+            modeColor={modeColor}
+            modeTextColor={modeTextColor}
+            taskPanelBg={taskPanelBg}
+            secondaryButtonText={secondaryButtonText}
+            onClose={() => setShowHelp(false)}
+            onPrivacyPress={() => {
+              setShowHelp(false);
+              setShowPrivacy(true);
+            }}
+          />
 
-          {showPrivacy && (
-            <PrivacyModal
-              textColor={textColor}
-              modeTextColor={modeTextColor}
-              taskPanelBg={taskPanelBg}
-              secondaryButtonText={secondaryButtonText}
-              onClose={() => setShowPrivacy(false)}
-            />
-          )}
+          <PrivacyModal
+            visible={showPrivacy}
+            textColor={textColor}
+            modeTextColor={modeTextColor}
+            taskPanelBg={taskPanelBg}
+            secondaryButtonText={secondaryButtonText}
+            onClose={() => setShowPrivacy(false)}
+          />
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>

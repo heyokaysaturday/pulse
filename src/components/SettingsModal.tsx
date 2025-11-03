@@ -5,12 +5,14 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  Modal,
   StyleSheet,
   Linking,
   ScrollView,
 } from 'react-native';
 
 interface SettingsModalProps {
+  visible: boolean;
   focusDuration: number;
   breakDuration: number;
   customFocus: string;
@@ -35,6 +37,7 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
+  visible,
   focusDuration,
   breakDuration,
   customFocus,
@@ -58,11 +61,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onDisconnectSpotify,
 }) => {
   return (
-    <TouchableWithoutFeedback onPress={onClose}>
-      <View style={styles.modalOverlay}>
-        <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-          <View style={[styles.settingsModal, { backgroundColor: taskPanelBg }]}>
-            <View style={styles.settingsHeader}>
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={[styles.settingsModal, { backgroundColor: taskPanelBg }]}>
+              <View style={styles.settingsHeader}>
           <Text style={[styles.settingsTitle, { color: textColor }]}>
             Timer Settings
           </Text>
@@ -300,10 +309,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </View>
         </View>
         </ScrollView>
-          </View>
-        </TouchableWithoutFeedback>
-      </View>
-    </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
   );
 };
 

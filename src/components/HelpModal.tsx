@@ -4,12 +4,14 @@ import {
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  Modal,
   StyleSheet,
   Linking,
   ScrollView,
 } from 'react-native';
 
 interface HelpModalProps {
+  visible: boolean;
   textColor: string;
   modeColor: string;
   modeTextColor: string;
@@ -20,6 +22,7 @@ interface HelpModalProps {
 }
 
 export const HelpModal: React.FC<HelpModalProps> = ({
+  visible,
   textColor,
   modeColor,
   modeTextColor,
@@ -29,11 +32,17 @@ export const HelpModal: React.FC<HelpModalProps> = ({
   onPrivacyPress,
 }) => {
   return (
-    <TouchableWithoutFeedback onPress={onClose}>
-      <View style={styles.modalOverlay}>
-        <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-          <View style={[styles.helpModal, { backgroundColor: taskPanelBg }]}>
-            <View style={styles.helpHeader}>
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={[styles.helpModal, { backgroundColor: taskPanelBg }]}>
+              <View style={styles.helpHeader}>
               <Text style={[styles.helpTitle, { color: textColor }]}>
                 About Pulse
               </Text>
@@ -83,10 +92,11 @@ export const HelpModal: React.FC<HelpModalProps> = ({
                 Made with focus and flow
               </Text>
             </ScrollView>
-          </View>
-        </TouchableWithoutFeedback>
-      </View>
-    </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
   );
 };
 
