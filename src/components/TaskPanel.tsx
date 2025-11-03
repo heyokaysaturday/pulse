@@ -9,6 +9,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { Task } from '../types';
 
@@ -52,10 +53,14 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
   onClose,
 }) => {
   const hasCompletedTasks = tasks.some(task => task.completed);
+  const { width } = useWindowDimensions();
+  const isMobileWeb = Platform.OS === 'web' && width < 768;
+  const isDesktopWeb = Platform.OS === 'web' && width >= 768;
+
   return (
     <View style={styles.container}>
-      {/* Backdrop overlay for web - clicking it closes the panel */}
-      {Platform.OS === 'web' && (
+      {/* Backdrop overlay for desktop web only - clicking it closes the panel */}
+      {isDesktopWeb && (
         <TouchableWithoutFeedback onPress={onClose}>
           <View style={styles.backdrop} />
         </TouchableWithoutFeedback>
@@ -63,7 +68,12 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
 
       {/* Task Panel */}
       <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : onClose}>
-        <View style={[styles.taskPanel, { backgroundColor: taskPanelBg }]}>
+        <View style={[
+          styles.taskPanel,
+          { backgroundColor: taskPanelBg },
+          isMobileWeb && { left: 0, right: 0, width: '100%' },
+          isDesktopWeb && { left: undefined as any, right: 0, width: '50%' },
+        ]}>
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
             <KeyboardAvoidingView
               style={styles.keyboardAvoidingView}
@@ -172,10 +182,8 @@ const styles = StyleSheet.create({
   taskPanel: {
     position: 'absolute',
     top: 0,
-    ...(Platform.OS === 'web'
-      ? { right: 0, width: '50%', left: undefined }
-      : { left: 0, right: 0 }
-    ),
+    left: 0,
+    right: 0,
     bottom: 0,
     shadowColor: '#000',
     shadowOffset: { width: -2, height: 0 },
@@ -183,10 +191,23 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  taskPanelMobileWeb: {
+    // Full width on mobile web
+    left: 0,
+    right: 0,
+    width: '100%',
+  },
+  taskPanelDesktopWeb: {
+    // Half width on desktop web
+    left: undefined,
+    right: 0,
+    width: '50%',
+  },
   keyboardAvoidingView: {
     flex: 1,
     padding: 20,
     paddingTop: Platform.OS === 'web' ? 20 : 80,
+    minHeight: 0, // Prevents layout issues when keyboard opens
   },
   header: {
     flexDirection: 'row',

@@ -16,7 +16,7 @@ import {
 import { useSpotifyAuth } from './src/hooks/useSpotifyAuth';
 import { spotifyApi } from './src/services/spotifyApi';
 import { soundService } from './src/services/soundService';
-import { Header, Timer, Controls, TaskPanel, SettingsModal, ErrorBoundary } from './src/components';
+import { Header, Timer, Controls, TaskPanel, SettingsModal, HelpModal, PrivacyModal, ErrorBoundary } from './src/components';
 import { Task, Mode } from './src/types';
 import { getThemeColors } from './src/utils/theme';
 
@@ -57,6 +57,8 @@ export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskText, setNewTaskText] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
   const [focusDuration, setFocusDuration] = useState(25);
   const [breakDuration, setBreakDuration] = useState(5);
   const [customFocus, setCustomFocus] = useState('');
@@ -413,6 +415,11 @@ export default function App() {
               setShowTasks(false);
             }}
             onToggleTasks={() => setShowTasks(!showTasks)}
+            onHelpPress={() => {
+              setShowHelp(true);
+              setShowTasks(false);
+              setShowSettings(false);
+            }}
           />
 
           <View style={[styles.mainContent, isLandscape && styles.landscapeContent]}>
@@ -487,6 +494,31 @@ export default function App() {
               onDeleteTask={deleteTask}
               onClearCompleted={clearCompletedTasks}
               onClose={() => setShowTasks(false)}
+            />
+          )}
+
+          {showHelp && (
+            <HelpModal
+              textColor={textColor}
+              modeColor={modeColor}
+              modeTextColor={modeTextColor}
+              taskPanelBg={taskPanelBg}
+              secondaryButtonText={secondaryButtonText}
+              onClose={() => setShowHelp(false)}
+              onPrivacyPress={() => {
+                setShowHelp(false);
+                setShowPrivacy(true);
+              }}
+            />
+          )}
+
+          {showPrivacy && (
+            <PrivacyModal
+              textColor={textColor}
+              modeTextColor={modeTextColor}
+              taskPanelBg={taskPanelBg}
+              secondaryButtonText={secondaryButtonText}
+              onClose={() => setShowPrivacy(false)}
             />
           )}
         </View>

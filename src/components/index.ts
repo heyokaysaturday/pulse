@@ -3,4 +3,6 @@ export { Timer } from './Timer';
 export { Controls } from './Controls';
 export { TaskPanel } from './TaskPanel';
 export { SettingsModal } from './SettingsModal';
+export { HelpModal } from './HelpModal';
+export { PrivacyModal } from './PrivacyModal';
 export { ErrorBoundary } from './ErrorBoundary';

@@ -1,5 +1,12 @@
 import React from "react";
-import { View, TouchableOpacity, Text, StyleSheet, Platform } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
 import { soundService } from "../services/soundService";
 
@@ -12,6 +19,7 @@ interface HeaderProps {
   isLandscape: boolean;
   onSettingsPress: () => void;
   onToggleTasks: () => void;
+  onHelpPress: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,7 +31,12 @@ export const Header: React.FC<HeaderProps> = ({
   isLandscape,
   onSettingsPress,
   onToggleTasks,
+  onHelpPress,
 }) => {
+  const { width } = useWindowDimensions();
+  const isMobileWeb = Platform.OS === 'web' && width < 768;
+  const isDesktopWeb = Platform.OS === 'web' && width >= 768;
+
   const handleSettingsPress = () => {
     soundService.playClick();
     onSettingsPress();
@@ -34,21 +47,51 @@ export const Header: React.FC<HeaderProps> = ({
     onToggleTasks();
   };
 
+  const handleHelpPress = () => {
+    soundService.playClick();
+    onHelpPress();
+  };
+
+  // Calculate responsive top position for web
+  const getButtonTopPosition = () => {
+    if (Platform.OS === 'web') {
+      return isDesktopWeb ? 30 : 50;
+    }
+    return 50;
+  };
+
   return (
     <View style={[styles.header, isLandscape && styles.headerLandscape]}>
-      <TouchableOpacity
-        style={[
-          styles.settingsButton,
-          isLandscape && styles.settingsButtonLandscape,
-          {
-            backgroundColor: secondaryButtonBg,
-            borderColor: secondaryButtonBorder,
-          },
-        ]}
-        onPress={handleSettingsPress}
-      >
-        <Text style={[styles.settingsIcon, { color: textColor }]}>⚙</Text>
-      </TouchableOpacity>
+      <View style={[styles.leftButtons, { top: getButtonTopPosition() }]}>
+        <TouchableOpacity
+          style={[
+            styles.iconButton,
+            isLandscape && styles.settingsButtonLandscape,
+            {
+              backgroundColor: secondaryButtonBg,
+              borderColor: secondaryButtonBorder,
+            },
+          ]}
+          onPress={handleSettingsPress}
+        >
+          <Text style={[styles.icon, { color: textColor }]}>⚙</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.iconButton,
+            isLandscape && styles.helpButtonLandscape,
+            {
+              backgroundColor: secondaryButtonBg,
+              borderColor: secondaryButtonBorder,
+              marginLeft: 10,
+            },
+          ]}
+          onPress={handleHelpPress}
+        >
+          <Text style={[styles.icon, { color: textColor }]}>?</Text>
+        </TouchableOpacity>
+      </View>
 
       <Svg width="60" height="60" viewBox="0 0 200 200" fill="none">
         {/* Outer circle */}
@@ -83,6 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
       <TouchableOpacity
         style={[
           styles.toggleTasksButton,
+          { top: Platform.OS === 'web' ? (isDesktopWeb ? 52 : 53) : 112 },
           isLandscape && styles.toggleTasksButtonLandscape,
           {
             backgroundColor: secondaryButtonBg,
@@ -113,10 +157,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
   },
-  settingsButton: {
+  leftButtons: {
     position: "absolute",
     left: 20,
-    top: Platform.OS === "web" ? 50 : 110,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  iconButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -125,19 +172,21 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   settingsButtonLandscape: {
-    top: 32,
-    left: 80,
+    // Position handled by leftButtons container
   },
-  settingsIcon: {
+  helpButtonLandscape: {
+    // Position handled by leftButtons container
+  },
+  icon: {
     fontSize: 20,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 20,
     marginTop: -2,
+    fontWeight: "600",
   },
   toggleTasksButton: {
     position: "absolute",
     right: 20,
-    top: Platform.OS === "web" ? 52 : 112,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 16,
