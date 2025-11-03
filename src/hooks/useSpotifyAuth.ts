@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { makeRedirectUri, useAuthRequest } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,13 +22,10 @@ export function useSpotifyAuth() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  const redirectUri = makeRedirectUri({
+  const redirectUri = useMemo(() => makeRedirectUri({
     scheme: 'pulse',
     path: 'redirect',
-  });
-
-  // Log the redirect URI for debugging
-  console.log('Spotify Redirect URI:', redirectUri);
+  }), []);
 
   // Load saved token on mount and check if it needs refresh
   useEffect(() => {
@@ -59,6 +56,19 @@ export function useSpotifyAuth() {
             setAccessToken(savedToken);
             setIsConnected(true);
             spotifyApi.setAccessToken(savedToken);
+
+            // Set up automatic refresh 10 minutes before expiry
+            const refreshTime = timeUntilExpiry - (10 * 60 * 1000);
+            if (refreshTime > 0) {
+              console.log('Will auto-refresh token in', Math.floor(refreshTime / 1000 / 60), 'minutes');
+              const timeoutId = setTimeout(async () => {
+                console.log('Auto-refreshing token proactively...');
+                await refreshAccessToken();
+              }, refreshTime);
+
+              // Clean up timeout on unmount
+              return () => clearTimeout(timeoutId);
+            }
           }
         }
       } catch (error) {
@@ -170,7 +180,7 @@ export function useSpotifyAuth() {
       }
 
       const tokenData = await tokenResponse.json();
-      const { access_token, expires_in } = tokenData;
+      const { access_token, expires_in, refresh_token: new_refresh_token } = tokenData;
 
       // Calculate new expiry time
       const expiryTime = Date.now() + expires_in * 1000;
@@ -179,10 +189,27 @@ export function useSpotifyAuth() {
       await AsyncStorage.setItem(TOKEN_STORAGE_KEY, access_token);
       await AsyncStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
 
+      // Update refresh token if Spotify provides a new one
+      if (new_refresh_token) {
+        await AsyncStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, new_refresh_token);
+        console.log('Updated refresh token');
+      }
+
       setAccessToken(access_token);
       spotifyApi.setAccessToken(access_token);
 
       console.log('Access token refreshed successfully, expires in:', expires_in, 'seconds');
+
+      // Schedule next auto-refresh 10 minutes before expiry
+      const refreshTime = (expires_in * 1000) - (10 * 60 * 1000);
+      if (refreshTime > 0) {
+        console.log('Scheduling next auto-refresh in', Math.floor(refreshTime / 1000 / 60), 'minutes');
+        setTimeout(async () => {
+          console.log('Auto-refreshing token proactively...');
+          await refreshAccessToken();
+        }, refreshTime);
+      }
+
       return true;
     } catch (error) {
       console.error('Error refreshing access token:', error);

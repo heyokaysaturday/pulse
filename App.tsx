@@ -102,9 +102,11 @@ export default function App() {
     }
   }, [isSpotifyConnected, isActive]);
 
-  // Update currently playing track
+  // Update currently playing track with smart polling
   useEffect(() => {
     if (!isSpotifyConnected) return;
+
+    let timeoutId: NodeJS.Timeout | null = null;
 
     const updateCurrentTrack = async () => {
       try {
@@ -113,19 +115,39 @@ export default function App() {
           const track = `${playback.item.name} - ${playback.item.artists[0]?.name}`;
           setCurrentTrack(track);
           setIsPlaying(playback.is_playing);
+
+          // Calculate when to check again based on track duration
+          if (playback.is_playing && playback.item.duration_ms && playback.progress_ms !== undefined) {
+            const remainingMs = playback.item.duration_ms - playback.progress_ms;
+            // Add 2 seconds buffer to ensure track has changed
+            const nextCheckMs = remainingMs + 2000;
+
+            console.log(`Track will end in ${Math.round(remainingMs / 1000)}s, checking again in ${Math.round(nextCheckMs / 1000)}s`);
+
+            // Schedule next update after track ends
+            timeoutId = setTimeout(updateCurrentTrack, nextCheckMs);
+          } else {
+            // If paused or no duration info, fall back to checking every 30 seconds
+            timeoutId = setTimeout(updateCurrentTrack, 30000);
+          }
         } else {
           setCurrentTrack(null);
           setIsPlaying(false);
+          // No track playing, check again in 30 seconds
+          timeoutId = setTimeout(updateCurrentTrack, 30000);
         }
       } catch (error) {
         console.error('Error getting current track:', error);
+        // On error, try again in 30 seconds
+        timeoutId = setTimeout(updateCurrentTrack, 30000);
       }
     };
 
     updateCurrentTrack();
-    const interval = setInterval(updateCurrentTrack, 5000);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [isSpotifyConnected]);
 
   useEffect(() => {

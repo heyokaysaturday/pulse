@@ -53,14 +53,23 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
 }) => {
   const hasCompletedTasks = tasks.some(task => task.completed);
   return (
-    <TouchableWithoutFeedback onPress={onClose}>
-      <View style={[styles.taskPanel, { backgroundColor: taskPanelBg }]}>
-        <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-          <KeyboardAvoidingView
-            style={styles.keyboardAvoidingView}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
-            <View style={styles.header}>
+    <View style={styles.container}>
+      {/* Backdrop overlay for web - clicking it closes the panel */}
+      {Platform.OS === 'web' && (
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.backdrop} />
+        </TouchableWithoutFeedback>
+      )}
+
+      {/* Task Panel */}
+      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : onClose}>
+        <View style={[styles.taskPanel, { backgroundColor: taskPanelBg }]}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <KeyboardAvoidingView
+              style={styles.keyboardAvoidingView}
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+              <View style={styles.header}>
         <Text style={[styles.taskPanelTitle, { color: modeColor }]}>Tasks</Text>
         {hasCompletedTasks && (
           <TouchableOpacity
@@ -138,11 +147,28 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
           </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
       </View>
-    </TouchableWithoutFeedback>
+      </TouchableWithoutFeedback>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+  },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: '50%',
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
   taskPanel: {
     position: 'absolute',
     top: 0,

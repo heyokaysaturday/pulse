@@ -3,6 +3,7 @@ import { Audio } from "expo-av";
 class SoundService {
   private checkSound: Audio.Sound | null = null;
   private dingSound: Audio.Sound | null = null;
+  private clickSound: Audio.Sound | null = null;
 
   async loadSounds() {
     try {
@@ -22,6 +23,13 @@ class SoundService {
         require("../../assets/sounds/minimal-ding-sfx-383725.mp3")
       );
       this.dingSound = dingSound;
+
+      // Load click sound (button clicks)
+      const { sound: clickSound } = await Audio.Sound.createAsync(
+        require("../../assets/sounds/mouse-click-290204.mp3")
+      );
+      await clickSound.setVolumeAsync(0.8); // Set to 80% volume
+      this.clickSound = clickSound;
 
       console.log("Sounds loaded successfully");
     } catch (error) {
@@ -57,6 +65,17 @@ class SoundService {
     }
   }
 
+  async playClick() {
+    try {
+      if (this.clickSound) {
+        await this.clickSound.setPositionAsync(0); // Reset to start
+        await this.clickSound.playAsync();
+      }
+    } catch (error) {
+      console.error("Error playing click sound:", error);
+    }
+  }
+
   async unloadSounds() {
     try {
       if (this.checkSound) {
@@ -64,6 +83,9 @@ class SoundService {
       }
       if (this.dingSound) {
         await this.dingSound.unloadAsync();
+      }
+      if (this.clickSound) {
+        await this.clickSound.unloadAsync();
       }
     } catch (error) {
       console.error("Error unloading sounds:", error);

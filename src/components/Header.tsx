@@ -1,6 +1,7 @@
 import React from "react";
 import { View, TouchableOpacity, Text, StyleSheet, Platform } from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
+import { soundService } from "../services/soundService";
 
 interface HeaderProps {
   modeColor: string;
@@ -23,6 +24,16 @@ export const Header: React.FC<HeaderProps> = ({
   onSettingsPress,
   onToggleTasks,
 }) => {
+  const handleSettingsPress = () => {
+    soundService.playClick();
+    onSettingsPress();
+  };
+
+  const handleToggleTasks = () => {
+    soundService.playClick();
+    onToggleTasks();
+  };
+
   return (
     <View style={[styles.header, isLandscape && styles.headerLandscape]}>
       <TouchableOpacity
@@ -34,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
             borderColor: secondaryButtonBorder,
           },
         ]}
-        onPress={onSettingsPress}
+        onPress={handleSettingsPress}
       >
         <Text style={[styles.settingsIcon, { color: textColor }]}>⚙</Text>
       </TouchableOpacity>
@@ -78,7 +89,7 @@ export const Header: React.FC<HeaderProps> = ({
             borderColor: secondaryButtonBorder,
           },
         ]}
-        onPress={onToggleTasks}
+        onPress={handleToggleTasks}
       >
         <Text style={[styles.toggleTasksButtonText, { color: textColor }]}>
           {showTasks ? "Hide Tasks" : "Show Tasks"}
@@ -119,6 +130,9 @@ const styles = StyleSheet.create({
   },
   settingsIcon: {
     fontSize: 20,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginTop: -2,
   },
   toggleTasksButton: {
     position: "absolute",

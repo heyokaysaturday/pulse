@@ -1,5 +1,6 @@
 import React from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { soundService } from "../services/soundService";
 
 interface ControlsProps {
   isActive: boolean;
@@ -24,6 +25,21 @@ export const Controls: React.FC<ControlsProps> = ({
   onReset,
   onSkip,
 }) => {
+  const handleStartPause = () => {
+    soundService.playClick();
+    onStartPause();
+  };
+
+  const handleReset = () => {
+    soundService.playClick();
+    onReset();
+  };
+
+  const handleSkip = () => {
+    soundService.playClick();
+    onSkip();
+  };
+
   return (
     <View style={[styles.controls, isLandscape && styles.controlsLandscape]}>
       <TouchableOpacity
@@ -32,7 +48,7 @@ export const Controls: React.FC<ControlsProps> = ({
           styles.primaryButton,
           { backgroundColor: modeColor },
         ]}
-        onPress={onStartPause}
+        onPress={handleStartPause}
       >
         <Text style={styles.primaryButtonText}>
           {isActive ? "Pause" : "Start"}
@@ -48,7 +64,7 @@ export const Controls: React.FC<ControlsProps> = ({
               borderColor: secondaryButtonBorder,
             },
           ]}
-          onPress={onReset}
+          onPress={handleReset}
         >
           <Text
             style={[styles.secondaryButtonText, { color: secondaryButtonText }]}
@@ -65,7 +81,7 @@ export const Controls: React.FC<ControlsProps> = ({
               borderColor: secondaryButtonBorder,
             },
           ]}
-          onPress={onSkip}
+          onPress={handleSkip}
         >
           <Text
             style={[styles.secondaryButtonText, { color: secondaryButtonText }]}
