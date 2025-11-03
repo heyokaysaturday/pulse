@@ -52,12 +52,15 @@ export const Header: React.FC<HeaderProps> = ({
     onHelpPress();
   };
 
-  // Calculate responsive top position for web
+  // Calculate responsive top position
   const getButtonTopPosition = () => {
-    if (Platform.OS === 'web') {
-      return isDesktopWeb ? 30 : 50;
+    if (isLandscape) {
+      return 32; // Landscape mode
     }
-    return 50;
+    if (Platform.OS === 'web') {
+      return isDesktopWeb ? 30 : 50; // Web desktop/mobile
+    }
+    return 110; // Native portrait mode
   };
 
   return (

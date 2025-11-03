@@ -1,35 +1,25 @@
-import { Audio } from "expo-av";
+import { createAudioPlayer, type AudioPlayer, type AudioSource } from "expo-audio";
 
 class SoundService {
-  private checkSound: Audio.Sound | null = null;
-  private dingSound: Audio.Sound | null = null;
-  private clickSound: Audio.Sound | null = null;
+  private checkPlayer: AudioPlayer | null = null;
+  private dingPlayer: AudioPlayer | null = null;
+  private clickPlayer: AudioPlayer | null = null;
+
+  private checkSource: AudioSource = require("../../assets/sounds/scribble-6144.mp3");
+  private dingSource: AudioSource = require("../../assets/sounds/minimal-ding-sfx-383725.mp3");
+  private clickSource: AudioSource = require("../../assets/sounds/mouse-click-290204.mp3");
 
   async loadSounds() {
     try {
-      // Set audio mode for iOS to play in silent mode
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-      });
+      // Create audio players for each sound
+      this.checkPlayer = createAudioPlayer(this.checkSource);
+      this.dingPlayer = createAudioPlayer(this.dingSource);
+      this.clickPlayer = createAudioPlayer(this.clickSource);
 
-      // Load check sound (scribble)
-      const { sound: checkSound } = await Audio.Sound.createAsync(
-        require("../../assets/sounds/scribble-6144.mp3")
-      );
-      this.checkSound = checkSound;
-
-      // Load ding sound (timer complete)
-      const { sound: dingSound } = await Audio.Sound.createAsync(
-        require("../../assets/sounds/minimal-ding-sfx-383725.mp3")
-      );
-      this.dingSound = dingSound;
-
-      // Load click sound (button clicks)
-      const { sound: clickSound } = await Audio.Sound.createAsync(
-        require("../../assets/sounds/mouse-click-290204.mp3")
-      );
-      await clickSound.setVolumeAsync(0.8); // Set to 80% volume
-      this.clickSound = clickSound;
+      // Set click sound to 80% volume
+      if (this.clickPlayer) {
+        this.clickPlayer.volume = 0.8;
+      }
 
       console.log("Sounds loaded successfully");
     } catch (error) {
@@ -39,10 +29,10 @@ class SoundService {
 
   async playCheck() {
     try {
-      if (this.checkSound) {
+      if (this.checkPlayer) {
         console.log("Playing check sound...");
-        await this.checkSound.setPositionAsync(0); // Reset to start
-        await this.checkSound.playAsync();
+        this.checkPlayer.seekTo(0); // Reset to start
+        this.checkPlayer.play();
       } else {
         console.warn("Check sound not loaded");
       }
@@ -53,10 +43,10 @@ class SoundService {
 
   async playDing() {
     try {
-      if (this.dingSound) {
+      if (this.dingPlayer) {
         console.log("Playing ding sound...");
-        await this.dingSound.setPositionAsync(0); // Reset to start
-        await this.dingSound.playAsync();
+        this.dingPlayer.seekTo(0); // Reset to start
+        this.dingPlayer.play();
       } else {
         console.warn("Ding sound not loaded");
       }
@@ -67,9 +57,9 @@ class SoundService {
 
   async playClick() {
     try {
-      if (this.clickSound) {
-        await this.clickSound.setPositionAsync(0); // Reset to start
-        await this.clickSound.playAsync();
+      if (this.clickPlayer) {
+        this.clickPlayer.seekTo(0); // Reset to start
+        this.clickPlayer.play();
       }
     } catch (error) {
       console.error("Error playing click sound:", error);
@@ -78,14 +68,14 @@ class SoundService {
 
   async unloadSounds() {
     try {
-      if (this.checkSound) {
-        await this.checkSound.unloadAsync();
+      if (this.checkPlayer) {
+        this.checkPlayer.remove();
       }
-      if (this.dingSound) {
-        await this.dingSound.unloadAsync();
+      if (this.dingPlayer) {
+        this.dingPlayer.remove();
       }
-      if (this.clickSound) {
-        await this.clickSound.unloadAsync();
+      if (this.clickPlayer) {
+        this.clickPlayer.remove();
       }
     } catch (error) {
       console.error("Error unloading sounds:", error);
