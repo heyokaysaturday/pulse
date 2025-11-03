@@ -1,8 +1,9 @@
 import { Mode, ThemeColors } from '../types';
 
 export const getThemeColors = (mode: Mode, isDark: boolean): ThemeColors => {
-  const modeColor = mode === 'focus' ? '#8AB4D5' : '#C8A68A';
-  const modeTextColor = isDark ? '#999999' : '#666666';
+  // WCAG 2.1 AA compliant colors - darker shades for sufficient contrast on white backgrounds
+  const modeColor = mode === 'focus' ? '#5A8AB8' : '#A6835E';
+  const modeTextColor = isDark ? '#B3B3B3' : '#666666';
 
   if (isDark) {
     return {

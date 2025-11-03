@@ -111,10 +111,15 @@ export default function App() {
 
     let timeoutIds: NodeJS.Timeout[] = [];
     let currentTrackId: string | null = null;
+    let isCleanedUp = false;
 
     const updateCurrentTrack = async () => {
+      if (isCleanedUp) return; // Don't execute if already cleaned up
+
       try {
         const playback = await spotifyApi.getPlaybackState();
+        if (isCleanedUp) return; // Check again after async call
+
         if (playback?.item) {
           const track = `${playback.item.name} - ${playback.item.artists[0]?.name}`;
           const trackId = playback.item.id;
@@ -131,12 +136,13 @@ export default function App() {
           // Calculate when to check again based on track duration
           if (playback.is_playing && playback.item.duration_ms && playback.progress_ms !== undefined) {
             const remainingMs = playback.item.duration_ms - playback.progress_ms;
+            const MIN_DELAY = 10000; // Minimum 10 seconds between checks
 
             // For longer tracks (>90 sec), check at 33%, 66%, and end
-            // For shorter tracks, just check at end
+            // For shorter tracks, just check at end with minimum delay
             if (remainingMs > 90000) {
-              const checkAt33 = remainingMs * 0.33;
-              const checkAt66 = remainingMs * 0.66;
+              const checkAt33 = Math.max(remainingMs * 0.33, MIN_DELAY);
+              const checkAt66 = Math.max(remainingMs * 0.66, MIN_DELAY);
               const checkAtEnd = remainingMs + 2000;
 
               console.log(`Track: ${Math.round(remainingMs / 1000)}s remaining. Checks at: 33% (${Math.round(checkAt33 / 1000)}s), 66% (${Math.round(checkAt66 / 1000)}s), end (${Math.round(checkAtEnd / 1000)}s)`);
@@ -145,9 +151,9 @@ export default function App() {
               timeoutIds.push(setTimeout(updateCurrentTrack, checkAt66));
               timeoutIds.push(setTimeout(updateCurrentTrack, checkAtEnd));
             } else {
-              // Short track - just check at end
-              const checkAtEnd = remainingMs + 2000;
-              console.log(`Short track: ${Math.round(remainingMs / 1000)}s remaining. Check at end (${Math.round(checkAtEnd / 1000)}s)`);
+              // Short track - check at end, but enforce minimum delay of 10 seconds
+              const checkAtEnd = Math.max(remainingMs + 2000, MIN_DELAY);
+              console.log(`Short track: ${Math.round(remainingMs / 1000)}s remaining. Check in ${Math.round(checkAtEnd / 1000)}s`);
               timeoutIds.push(setTimeout(updateCurrentTrack, checkAtEnd));
             }
           } else {
@@ -164,14 +170,18 @@ export default function App() {
       } catch (error) {
         console.error('Error getting current track:', error);
         // On error, try again in 30 seconds
-        timeoutIds.push(setTimeout(updateCurrentTrack, 30000));
+        if (!isCleanedUp) {
+          timeoutIds.push(setTimeout(updateCurrentTrack, 30000));
+        }
       }
     };
 
     updateCurrentTrack();
 
     return () => {
+      isCleanedUp = true;
       timeoutIds.forEach(id => clearTimeout(id));
+      timeoutIds = [];
     };
   }, [isSpotifyConnected]);
 

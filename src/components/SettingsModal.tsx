@@ -66,11 +66,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       transparent={true}
       animationType="fade"
       onRequestClose={onClose}
+      accessibilityViewIsModal={true}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.modalOverlay}>
+      <TouchableWithoutFeedback onPress={onClose} accessible={false}>
+        <View style={styles.modalOverlay} accessible={false} importantForAccessibility="no-hide-descendants">
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-            <View style={[styles.settingsModal, { backgroundColor: taskPanelBg }]}>
+            <View
+              style={[styles.settingsModal, { backgroundColor: taskPanelBg }]}
+              accessibilityRole="dialog"
+              accessibilityLabel="Timer Settings"
+            >
               <View style={styles.settingsHeader}>
           <Text style={[styles.settingsTitle, { color: textColor }]}>
             Timer Settings

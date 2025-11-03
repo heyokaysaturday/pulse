@@ -37,11 +37,16 @@ export const HelpModal: React.FC<HelpModalProps> = ({
       transparent={true}
       animationType="fade"
       onRequestClose={onClose}
+      accessibilityViewIsModal={true}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.modalOverlay}>
+      <TouchableWithoutFeedback onPress={onClose} accessible={false}>
+        <View style={styles.modalOverlay} accessible={false} importantForAccessibility="no-hide-descendants">
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-            <View style={[styles.helpModal, { backgroundColor: taskPanelBg }]}>
+            <View
+              style={[styles.helpModal, { backgroundColor: taskPanelBg }]}
+              accessibilityRole="dialog"
+              accessibilityLabel="About Pulse"
+            >
               <View style={styles.helpHeader}>
               <Text style={[styles.helpTitle, { color: textColor }]}>
                 About Pulse

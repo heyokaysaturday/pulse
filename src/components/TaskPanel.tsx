@@ -71,8 +71,8 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
         <View style={[
           styles.taskPanel,
           { backgroundColor: taskPanelBg },
-          isMobileWeb && { left: 0, right: 0, width: '100%' },
-          isDesktopWeb && { left: undefined as any, right: 0, width: '50%' },
+          isMobileWeb && { left: 0, width: '100%' },
+          isDesktopWeb && { width: '50%' },
         ]}>
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
             <KeyboardAvoidingView
@@ -182,7 +182,6 @@ const styles = StyleSheet.create({
   taskPanel: {
     position: 'absolute',
     top: 0,
-    left: 0,
     right: 0,
     bottom: 0,
     shadowColor: '#000',
@@ -255,7 +254,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: 'transparent',
   },
   checkbox: {
     width: 24,

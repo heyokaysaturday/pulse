@@ -14,14 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pulsetimer.app"
+      "bundleIdentifier": "dev.pulsetimer.app"
     },
     "android": {
-      "package": "com.pulsetimer.app",
+      "package": "dev.pulsetimer.app",
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#8AB4D5"
+        "backgroundColor": "#5A8AB8"
       },
       "permissions": [
         "INTERNET",
@@ -34,7 +34,13 @@
       ]
     },
     "web": {
-      "favicon": "./assets/web/icon-192.png"
+      "favicon": "./assets/web/icon-192.png",
+      "name": "Pulse - Pomodoro Timer with Spotify",
+      "shortName": "Pulse Timer",
+      "description": "A minimalist Pomodoro timer with Spotify integration to help you focus better. Free productivity app for time management and task tracking.",
+      "themeColor": "#5A8AB8",
+      "backgroundColor": "#F5F5F5",
+      "lang": "en"
     },
     "plugins": [
       "expo-asset",
