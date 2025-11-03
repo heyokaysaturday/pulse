@@ -92,8 +92,9 @@ export default function App() {
   useEffect(() => {
     if (!isActive) {
       setTimeLeft(mode === 'focus' ? FOCUS_TIME : BREAK_TIME);
+      progressAnim.setValue(0); // Reset progress animation when changing durations
     }
-  }, [focusDuration, breakDuration, mode, FOCUS_TIME, BREAK_TIME]);
+  }, [focusDuration, breakDuration, mode, FOCUS_TIME, BREAK_TIME, progressAnim]);
 
   // Capture user's volume when they start the timer (without controlling playback)
   useEffect(() => {
@@ -106,47 +107,69 @@ export default function App() {
   useEffect(() => {
     if (!isSpotifyConnected) return;
 
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutIds: NodeJS.Timeout[] = [];
+    let currentTrackId: string | null = null;
 
     const updateCurrentTrack = async () => {
       try {
         const playback = await spotifyApi.getPlaybackState();
         if (playback?.item) {
           const track = `${playback.item.name} - ${playback.item.artists[0]?.name}`;
+          const trackId = playback.item.id;
+
+          // Check if track changed (user skipped)
+          if (currentTrackId && trackId !== currentTrackId) {
+            console.log('🎵 Track changed! User likely skipped');
+          }
+          currentTrackId = trackId;
+
           setCurrentTrack(track);
           setIsPlaying(playback.is_playing);
 
           // Calculate when to check again based on track duration
           if (playback.is_playing && playback.item.duration_ms && playback.progress_ms !== undefined) {
             const remainingMs = playback.item.duration_ms - playback.progress_ms;
-            // Add 2 seconds buffer to ensure track has changed
-            const nextCheckMs = remainingMs + 2000;
 
-            console.log(`Track will end in ${Math.round(remainingMs / 1000)}s, checking again in ${Math.round(nextCheckMs / 1000)}s`);
+            // For longer tracks (>90 sec), check at 33%, 66%, and end
+            // For shorter tracks, just check at end
+            if (remainingMs > 90000) {
+              const checkAt33 = remainingMs * 0.33;
+              const checkAt66 = remainingMs * 0.66;
+              const checkAtEnd = remainingMs + 2000;
 
-            // Schedule next update after track ends
-            timeoutId = setTimeout(updateCurrentTrack, nextCheckMs);
+              console.log(`Track: ${Math.round(remainingMs / 1000)}s remaining. Checks at: 33% (${Math.round(checkAt33 / 1000)}s), 66% (${Math.round(checkAt66 / 1000)}s), end (${Math.round(checkAtEnd / 1000)}s)`);
+
+              timeoutIds.push(setTimeout(updateCurrentTrack, checkAt33));
+              timeoutIds.push(setTimeout(updateCurrentTrack, checkAt66));
+              timeoutIds.push(setTimeout(updateCurrentTrack, checkAtEnd));
+            } else {
+              // Short track - just check at end
+              const checkAtEnd = remainingMs + 2000;
+              console.log(`Short track: ${Math.round(remainingMs / 1000)}s remaining. Check at end (${Math.round(checkAtEnd / 1000)}s)`);
+              timeoutIds.push(setTimeout(updateCurrentTrack, checkAtEnd));
+            }
           } else {
             // If paused or no duration info, fall back to checking every 30 seconds
-            timeoutId = setTimeout(updateCurrentTrack, 30000);
+            timeoutIds.push(setTimeout(updateCurrentTrack, 30000));
           }
         } else {
           setCurrentTrack(null);
           setIsPlaying(false);
+          currentTrackId = null;
           // No track playing, check again in 30 seconds
-          timeoutId = setTimeout(updateCurrentTrack, 30000);
+          timeoutIds.push(setTimeout(updateCurrentTrack, 30000));
         }
       } catch (error) {
         console.error('Error getting current track:', error);
         // On error, try again in 30 seconds
-        timeoutId = setTimeout(updateCurrentTrack, 30000);
+        timeoutIds.push(setTimeout(updateCurrentTrack, 30000));
       }
     };
 
     updateCurrentTrack();
 
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      timeoutIds.forEach(id => clearTimeout(id));
     };
   }, [isSpotifyConnected]);
 
@@ -164,6 +187,20 @@ export default function App() {
         easing: Easing.linear,
         useNativeDriver: true,
       }).start();
+
+      // Fade out music 2 seconds before focus mode ends
+      if (mode === 'focus' && timeLeft === 2 && !fadeTriggeredRef.current && isSpotifyConnected) {
+        fadeTriggeredRef.current = true;
+        console.log('🎵 Focus ending in 2s - starting fade out');
+        if (deviceSupportsControlRef.current) {
+          spotifyApi.fadeOutAndPause(2000).catch((error: any) => {
+            if (error?.message?.includes('Restriction violated')) {
+              console.log('🚫 Device cannot be controlled - disabling playback control for this session');
+              deviceSupportsControlRef.current = false;
+            }
+          });
+        }
+      }
 
       return () => {
         if (intervalRef.current) clearInterval(intervalRef.current);
@@ -197,7 +234,7 @@ export default function App() {
       progressAnim.setValue(0);
       fadeTriggeredRef.current = false;
     }
-  }, [isActive, timeLeft, mode, FOCUS_TIME, BREAK_TIME, progressAnim, scaleAnim]);
+  }, [isActive, timeLeft, mode, FOCUS_TIME, BREAK_TIME, progressAnim, scaleAnim, isSpotifyConnected]);
 
   // Spotify control: Handle mode transitions
   const previousModeRef = useRef(mode);
@@ -210,8 +247,6 @@ export default function App() {
 
     // Just entered focus mode from break
     const justEnteredFocus = currentMode === 'focus' && prevMode === 'break';
-    // Just left focus mode to break
-    const justLeftFocus = currentMode === 'break' && prevMode === 'focus';
 
     const handleModeTransition = async () => {
       if (!deviceSupportsControlRef.current) {
@@ -230,21 +265,11 @@ export default function App() {
             deviceSupportsControlRef.current = false;
           }
         }
-      } else if (justLeftFocus) {
-        // Leaving focus mode - fade out music
-        console.log('🎵 Leaving focus mode - fading out music');
-        try {
-          await spotifyApi.fadeOutAndPause(2000);
-        } catch (error: any) {
-          if (error?.message?.includes('Restriction violated')) {
-            console.log('🚫 Device cannot be controlled - disabling playback control for this session');
-            deviceSupportsControlRef.current = false;
-          }
-        }
       }
+      // Note: Fade out is handled 2 seconds before focus ends (see timer effect above)
     };
 
-    if (justEnteredFocus || justLeftFocus) {
+    if (justEnteredFocus) {
       handleModeTransition();
     }
 
