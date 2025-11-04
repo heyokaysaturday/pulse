@@ -6,3 +6,4 @@ export { SettingsModal } from './SettingsModal';
 export { HelpModal } from './HelpModal';
 export { PrivacyModal } from './PrivacyModal';
 export { ErrorBoundary } from './ErrorBoundary';
+export { SpotifyBetaForm } from './SpotifyBetaForm';

@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Linking,
   ScrollView,
+  Platform,
 } from 'react-native';
 
 interface HelpModalProps {
@@ -44,7 +45,6 @@ export const HelpModal: React.FC<HelpModalProps> = ({
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
             <View
               style={[styles.helpModal, { backgroundColor: taskPanelBg }]}
-              accessibilityRole="dialog"
               accessibilityLabel="About Pulse"
             >
               <View style={styles.helpHeader}>
@@ -72,6 +72,19 @@ export const HelpModal: React.FC<HelpModalProps> = ({
               </Text>
 
               <View style={styles.linksSection}>
+                {Platform.OS === 'web' && (
+                  <TouchableOpacity
+                    style={styles.linkItem}
+                    onPress={() =>
+                      Linking.openURL('https://play.google.com/apps/internaltest/4701730929899871460')
+                    }
+                  >
+                    <Text style={[styles.linkText, { color: modeColor }]}>
+                      📱 Try Android App (Beta)
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
                 <TouchableOpacity
                   style={styles.linkItem}
                   onPress={onPrivacyPress}

@@ -39,7 +39,6 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
             <View
               style={[styles.privacyModal, { backgroundColor: taskPanelBg }]}
-              accessibilityRole="dialog"
               accessibilityLabel="Privacy Policy"
             >
               <View style={styles.privacyHeader}>

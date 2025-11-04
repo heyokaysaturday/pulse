@@ -13,6 +13,7 @@ import {
   Platform,
   Keyboard,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSpotifyAuth } from './src/hooks/useSpotifyAuth';
 import { spotifyApi } from './src/services/spotifyApi';
 import { soundService } from './src/services/soundService';
@@ -35,21 +36,7 @@ export default function App() {
     isConnected: isSpotifyConnected,
   } = useSpotifyAuth();
 
-  // Set up token refresh callback for Spotify API
-  useEffect(() => {
-    if (refreshAccessToken) {
-      spotifyApi.setTokenRefreshCallback(refreshAccessToken);
-    }
-  }, [refreshAccessToken]);
-
-  // Load sounds on mount
-  useEffect(() => {
-    soundService.loadSounds();
-    return () => {
-      soundService.unloadSounds();
-    };
-  }, []);
-
+  // State declarations
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
   const [mode, setMode] = useState<Mode>('focus');
@@ -89,6 +76,48 @@ export default function App() {
     secondaryButtonText,
     ringBackgroundColor,
   } = themeColors;
+
+  // Set up token refresh callback for Spotify API
+  useEffect(() => {
+    if (refreshAccessToken) {
+      spotifyApi.setTokenRefreshCallback(refreshAccessToken);
+    }
+  }, [refreshAccessToken]);
+
+  // Load sounds on mount
+  useEffect(() => {
+    soundService.loadSounds();
+    return () => {
+      soundService.unloadSounds();
+    };
+  }, []);
+
+  // Load tasks from AsyncStorage on mount
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        const storedTasks = await AsyncStorage.getItem('@pulse_tasks');
+        if (storedTasks) {
+          setTasks(JSON.parse(storedTasks));
+        }
+      } catch (error) {
+        console.error('Error loading tasks:', error);
+      }
+    };
+    loadTasks();
+  }, []);
+
+  // Save tasks to AsyncStorage whenever they change
+  useEffect(() => {
+    const saveTasks = async () => {
+      try {
+        await AsyncStorage.setItem('@pulse_tasks', JSON.stringify(tasks));
+      } catch (error) {
+        console.error('Error saving tasks:', error);
+      }
+    };
+    saveTasks();
+  }, [tasks]);
 
   // Update timeLeft when durations change and timer is not active
   useEffect(() => {
@@ -167,8 +196,11 @@ export default function App() {
           // No track playing, check again in 30 seconds
           timeoutIds.push(setTimeout(updateCurrentTrack, 30000));
         }
-      } catch (error) {
-        console.error('Error getting current track:', error);
+      } catch (error: any) {
+        // Only log errors that aren't "no active device" errors
+        if (error?.message && !error.message.includes('No active device')) {
+          console.error('Error getting current track:', error);
+        }
         // On error, try again in 30 seconds
         if (!isCleanedUp) {
           timeoutIds.push(setTimeout(updateCurrentTrack, 30000));
@@ -410,6 +442,7 @@ export default function App() {
               styles.container,
               { backgroundColor },
             ]}
+            {...(Platform.OS === 'web' ? { role: 'main' as any } : {})}
           >
             <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 

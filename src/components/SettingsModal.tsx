@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,11 @@ import {
   StyleSheet,
   Linking,
   ScrollView,
+  Switch,
+  Platform,
+  Alert,
 } from 'react-native';
+import { SpotifyBetaForm } from './SpotifyBetaForm';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -60,6 +64,74 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onConnectSpotify,
   onDisconnectSpotify,
 }) => {
+  const [dndEnabled, setDndEnabled] = useState(false);
+  const [hasDndPermission, setHasDndPermission] = useState(false);
+  const [isDndAvailable, setIsDndAvailable] = useState(false);
+  const isNativeMobile = Platform.OS === 'ios' || Platform.OS === 'android';
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      checkDndAvailability();
+    }
+  }, []);
+
+  const checkDndAvailability = async () => {
+    try {
+      // Try to require the module - will fail in Expo Go
+      const VolumeManager = require('react-native-volume-manager').default;
+      if (VolumeManager && VolumeManager.checkDndAccess) {
+        setIsDndAvailable(true);
+        const hasAccess = await VolumeManager.checkDndAccess();
+        setHasDndPermission(hasAccess);
+      }
+    } catch (error) {
+      // Module not available (Expo Go or not installed) - silently fail
+      setIsDndAvailable(false);
+    }
+  };
+
+  const requestDndPermission = async () => {
+    if (Platform.OS === 'android' && isDndAvailable) {
+      try {
+        const VolumeManager = require('react-native-volume-manager').default;
+        await VolumeManager.requestDndAccess();
+        // Check again after user returns from settings
+        setTimeout(checkDndAvailability, 1000);
+      } catch (error) {
+        console.log('Could not request DND permission:', error);
+      }
+    }
+  };
+
+  const toggleDnd = async (value: boolean) => {
+    if (Platform.OS === 'android' && isDndAvailable) {
+      if (!hasDndPermission) {
+        Alert.alert(
+          'Permission Required',
+          'Pulse needs permission to manage Do Not Disturb mode. Would you like to grant it?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Grant Permission', onPress: requestDndPermission },
+          ]
+        );
+        return;
+      }
+
+      try {
+        const VolumeManager = require('react-native-volume-manager').default;
+        if (value) {
+          await VolumeManager.setRingerMode('silent');
+        } else {
+          await VolumeManager.setRingerMode('normal');
+        }
+        setDndEnabled(value);
+      } catch (error) {
+        console.log('Error toggling DND:', error);
+        Alert.alert('Error', 'Failed to change Do Not Disturb mode');
+      }
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -73,7 +145,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
             <View
               style={[styles.settingsModal, { backgroundColor: taskPanelBg }]}
-              accessibilityRole="dialog"
               accessibilityLabel="Timer Settings"
             >
               <View style={styles.settingsHeader}>
@@ -275,15 +346,60 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </Text>
           </View>
         ) : (
-          <TouchableOpacity
-            style={[
-              styles.spotifyConnectButton,
-              { backgroundColor: '#1DB954', borderColor: '#1DB954' },
-            ]}
-            onPress={onConnectSpotify}
-          >
-            <Text style={styles.spotifyConnectText}>Connect Spotify</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity
+              style={[
+                styles.spotifyConnectButton,
+                { backgroundColor: '#1DB954', borderColor: '#1DB954' },
+              ]}
+              onPress={onConnectSpotify}
+            >
+              <Text style={styles.spotifyConnectText}>Connect Spotify</Text>
+            </TouchableOpacity>
+
+            {Platform.OS === 'web' && (
+              <View style={styles.betaFormContainer}>
+                <SpotifyBetaForm
+                  modeColor={modeColor}
+                  backgroundColor={taskPanelBg}
+                  textColor={textColor}
+                  inputBg={inputBg}
+                  inputBorder={inputBorder}
+                />
+              </View>
+            )}
+          </>
+        )}
+
+        {isNativeMobile && Platform.OS === 'android' && isDndAvailable && (
+          <>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: modeTextColor, marginTop: 24 },
+              ]}
+            >
+              Do Not Disturb
+            </Text>
+            <View style={styles.dndContainer}>
+              <View style={styles.dndRow}>
+                <View style={styles.dndTextContainer}>
+                  <Text style={[styles.dndTitle, { color: textColor }]}>
+                    Enable DND Mode
+                  </Text>
+                  <Text style={[styles.dndDescription, { color: modeTextColor }]}>
+                    Automatically enables Do Not Disturb during focus sessions
+                  </Text>
+                </View>
+                <Switch
+                  value={dndEnabled}
+                  onValueChange={toggleDnd}
+                  trackColor={{ false: inputBorder, true: modeColor }}
+                  thumbColor={dndEnabled ? '#FFFFFF' : '#F4F3F4'}
+                />
+              </View>
+            </View>
+          </>
         )}
 
         <Text
@@ -303,13 +419,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <TouchableOpacity
               style={[
                 styles.supportButton,
-                { backgroundColor: '#FFDD00', borderColor: '#FFDD00' },
+                { backgroundColor: '#FF5E5B', borderColor: '#FF5E5B' },
               ]}
               onPress={() =>
-                Linking.openURL('https://buymeacoffee.com/heyokaysaturday')
+                Linking.openURL('https://ko-fi.com/heyokaysaturday')
               }
             >
-              <Text style={styles.supportButtonText}>☕ Buy Me a Coffee</Text>
+              <Text style={styles.supportButtonText}>☕ Support on Ko-fi</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -419,7 +535,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   applyButtonText: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -481,5 +597,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000000',
+  },
+  betaFormContainer: {
+    marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(128, 128, 128, 0.2)',
+    paddingTop: 16,
+  },
+  dndContainer: {
+    marginBottom: 8,
+  },
+  dndRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  dndTextContainer: {
+    flex: 1,
+  },
+  dndTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  dndDescription: {
+    fontSize: 14,
+    lineHeight: 18,
   },
 });

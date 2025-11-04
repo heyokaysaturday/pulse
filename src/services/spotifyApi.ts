@@ -210,8 +210,14 @@ class SpotifyApiService {
   // Get current playback state (includes volume)
   async getPlaybackState() {
     try {
-      return await this.fetchWithAuth('/me/player');
-    } catch (error) {
+      const state = await this.fetchWithAuth('/me/player');
+      // Spotify returns 204 No Content when no device is active
+      return state;
+    } catch (error: any) {
+      // Don't log errors for common "no device" scenarios
+      if (error?.message && !error.message.includes('204') && !error.message.includes('No active device')) {
+        console.log('Error getting playback state:', error.message);
+      }
       return null;
     }
   }
@@ -369,6 +375,12 @@ class SpotifyApiService {
         throw volumeError;
       }
     } catch (error: any) {
+      // Check if it's a "no active device" error - this is normal when Spotify isn't running
+      if (error?.message?.includes('NO_ACTIVE_DEVICE') || error?.message?.includes('No active device')) {
+        // Silently ignore - this is expected when Spotify isn't open
+        return;
+      }
+
       // Check if it's a restriction violation
       if (error?.message?.includes('Restriction violated')) {
         console.warn('⚠️ Device restrictions prevent playback control');
@@ -376,13 +388,8 @@ class SpotifyApiService {
         return;
       }
 
-      console.error('Error during fade in:', error);
-      // Fallback to immediate play if fade fails (will fail silently if no devices)
-      try {
-        await this.play(deviceId);
-      } catch (playError) {
-        console.log('Could not start playback - make sure Spotify is active on a device');
-      }
+      console.log('Could not control Spotify playback:', error.message || error);
+      // Don't try to play again if we failed - just silently return
     }
   }
 }

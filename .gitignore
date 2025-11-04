@@ -35,3 +35,4 @@ web-build/
 # Bug reports
 bugreport-*.zip
 .vercel
+.expo/settings.json

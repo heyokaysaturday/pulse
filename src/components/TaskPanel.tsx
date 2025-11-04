@@ -56,6 +56,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
   const { width } = useWindowDimensions();
   const isMobileWeb = Platform.OS === 'web' && width < 768;
   const isDesktopWeb = Platform.OS === 'web' && width >= 768;
+  const isNativeMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
   return (
     <View style={styles.container}>
@@ -71,7 +72,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
         <View style={[
           styles.taskPanel,
           { backgroundColor: taskPanelBg },
-          isMobileWeb && { left: 0, width: '100%' },
+          (isMobileWeb || isNativeMobile) && { left: 0, width: '100%' },
           isDesktopWeb && { width: '50%' },
         ]}>
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addButtonText: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontSize: 24,
     fontWeight: 'bold',
   },

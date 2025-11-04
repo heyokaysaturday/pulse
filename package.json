@@ -14,7 +14,14 @@
     "build:all:release": "expo export --platform all --release",
     "build:all:debug": "expo export --platform all --debug",
     "build:all:simulator": "expo export --platform all --simulator",
-    "build:all:device": "expo export --platform all --device"
+    "build:all:device": "expo export --platform all --device",
+    "version:android": "eas build:version:set -p android",
+    "version:ios": "eas build:version:set -p ios",
+    "version:get": "eas build:version:get -p all",
+    "eas:build:android": "eas build --platform android --profile production",
+    "eas:build:ios": "eas build --platform ios --profile production",
+    "eas:build:preview": "eas build --platform android --profile preview",
+    "deploy:web": "npx expo export -p web && npx vercel --prod"
   },
   "dependencies": {
     "@expo-google-fonts/caveat": "^0.4.2",
@@ -34,6 +41,7 @@
     "react-native": "0.81.5",
     "react-native-dotenv": "^3.4.11",
     "react-native-svg": "15.12.1",
+    "react-native-volume-manager": "^2.0.8",
     "react-native-web": "^0.21.0"
   },
   "devDependencies": {
