@@ -58,8 +58,15 @@ class SoundService {
   async playClick() {
     try {
       if (this.clickPlayer) {
-        this.clickPlayer.seekTo(0); // Reset to start
-        this.clickPlayer.play();
+        // For quick clicks, recreate player for instant playback without seeking
+        const quickPlayer = createAudioPlayer(this.clickSource);
+        quickPlayer.volume = 0.8;
+        quickPlayer.play();
+
+        // Clean up after playing
+        setTimeout(() => {
+          quickPlayer.remove();
+        }, 500);
       }
     } catch (error) {
       console.error("Error playing click sound:", error);

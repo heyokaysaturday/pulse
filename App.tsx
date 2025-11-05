@@ -134,9 +134,9 @@ export default function App() {
     }
   }, [isSpotifyConnected, isActive]);
 
-  // Update currently playing track with smart polling
+  // Update currently playing track with smart polling (only when timer is active)
   useEffect(() => {
-    if (!isSpotifyConnected) return;
+    if (!isSpotifyConnected || !isActive) return;
 
     let timeoutIds: NodeJS.Timeout[] = [];
     let currentTrackId: string | null = null;
@@ -167,24 +167,12 @@ export default function App() {
             const remainingMs = playback.item.duration_ms - playback.progress_ms;
             const MIN_DELAY = 10000; // Minimum 10 seconds between checks
 
-            // For longer tracks (>90 sec), check at 33%, 66%, and end
-            // For shorter tracks, just check at end with minimum delay
-            if (remainingMs > 90000) {
-              const checkAt33 = Math.max(remainingMs * 0.33, MIN_DELAY);
-              const checkAt66 = Math.max(remainingMs * 0.66, MIN_DELAY);
-              const checkAtEnd = remainingMs + 2000;
+            // Check 2 seconds before track ends to catch track changes
+            // Use Math.max to ensure we don't check too frequently
+            const checkBeforeEnd = Math.max(remainingMs - 2000, MIN_DELAY);
 
-              console.log(`Track: ${Math.round(remainingMs / 1000)}s remaining. Checks at: 33% (${Math.round(checkAt33 / 1000)}s), 66% (${Math.round(checkAt66 / 1000)}s), end (${Math.round(checkAtEnd / 1000)}s)`);
-
-              timeoutIds.push(setTimeout(updateCurrentTrack, checkAt33));
-              timeoutIds.push(setTimeout(updateCurrentTrack, checkAt66));
-              timeoutIds.push(setTimeout(updateCurrentTrack, checkAtEnd));
-            } else {
-              // Short track - check at end, but enforce minimum delay of 10 seconds
-              const checkAtEnd = Math.max(remainingMs + 2000, MIN_DELAY);
-              console.log(`Short track: ${Math.round(remainingMs / 1000)}s remaining. Check in ${Math.round(checkAtEnd / 1000)}s`);
-              timeoutIds.push(setTimeout(updateCurrentTrack, checkAtEnd));
-            }
+            console.log(`Track: ${Math.round(remainingMs / 1000)}s remaining. Will check in ${Math.round(checkBeforeEnd / 1000)}s`);
+            timeoutIds.push(setTimeout(updateCurrentTrack, checkBeforeEnd));
           } else {
             // If paused or no duration info, fall back to checking every 30 seconds
             timeoutIds.push(setTimeout(updateCurrentTrack, 30000));
@@ -215,7 +203,7 @@ export default function App() {
       timeoutIds.forEach(id => clearTimeout(id));
       timeoutIds = [];
     };
-  }, [isSpotifyConnected]);
+  }, [isSpotifyConnected, isActive]);
 
   useEffect(() => {
     if (isActive && timeLeft > 0) {

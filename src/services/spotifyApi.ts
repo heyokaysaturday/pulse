@@ -41,14 +41,25 @@ class SpotifyApiService {
       throw new Error('No access token available');
     }
 
-    const response = await fetch(`${SPOTIFY_CONFIG.API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        'Authorization': `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
+    let response;
+    try {
+      response = await fetch(`${SPOTIFY_CONFIG.API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
+    } catch (networkError: any) {
+      // Handle CORS and other network errors
+      if (networkError.message?.includes('CORS') || networkError.name === 'TypeError') {
+        // CORS errors are expected on web - Spotify doesn't support browser requests for player endpoints
+        // Silently return null for these
+        return null;
+      }
+      throw networkError;
+    }
 
     // Handle 401 Unauthorized - token might be expired
     if (response.status === 401 && retryCount === 0 && this.tokenRefreshCallback) {
@@ -112,14 +123,14 @@ class SpotifyApiService {
     const devices = data?.devices || [];
 
     // Log device details for debugging
-    devices.forEach(device => {
-      const isRestricted = (device as any).is_restricted;
+    devices.forEach((device: any) => {
+      const isRestricted = device.is_restricted;
       console.log('Device:', {
         name: device.name,
         type: device.type,
         is_active: device.is_active,
         is_restricted: isRestricted,
-        supports_volume: (device as any).supports_volume
+        supports_volume: device.supports_volume
       });
 
       if (isRestricted) {
@@ -129,7 +140,7 @@ class SpotifyApiService {
     });
 
     // Filter out restricted devices
-    const controllableDevices = devices.filter(device => !(device as any).is_restricted);
+    const controllableDevices = devices.filter((device: any) => !device.is_restricted);
 
     if (controllableDevices.length === 0 && devices.length > 0) {
       console.warn('⚠️ No controllable devices found. All available devices have restrictions.');
@@ -301,9 +312,8 @@ class SpotifyApiService {
       }
 
       // Use stored user volume, or get from current state, or default to 100
-      let targetVolume = this.userVolume;
-      if (targetVolume === null) {
-        targetVolume = state.device?.volume_percent || 100;
+      let targetVolume: number = this.userVolume ?? state.device?.volume_percent ?? 100;
+      if (this.userVolume === null) {
         this.userVolume = targetVolume;
         console.log(`Remembering user volume: ${this.userVolume}%`);
       } else {
